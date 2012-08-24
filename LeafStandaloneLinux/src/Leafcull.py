@@ -16,6 +16,9 @@ def pruneGraph(adjList, IDs):
     
     removeList = []
     nodesInGraph = adjList.keys()
+    if nodesInGraph == []:
+        # If the graph supplied is empty (i.e. no redundancy is present)
+        return removeList
 
     # Determine number of neighbours for each node.
     neighbours = {}
