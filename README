@@ -1,7 +1,7 @@
 General Program Notes
 	The data and source code for the program can be downloaded from the Leaf website (http://www.bioinf.manchester.ac.uk/leaf/). The website also enables you to run PDB and user sequence culling queries.
 	The code was tested extensively on Windows Vista, and also on Windows XP and Ubuntu Linux.
-	A paper describing the Leaf algorithm, along with comparisons to other redundancy removal algorithms, can be found at WWWWWW.
+	A paper describing the Leaf algorithm, along with comparisons to other redundancy removal algorithms, can be found at http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0055484.
 
 Requirements For Using Leaf
 	A version of Python is needed to run Leaf. The code was designed for Python 2.7, but will likely work with Python 2.6. It will also work with Python 3.0 with minor syntactic changes.
