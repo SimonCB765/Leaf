@@ -1,0 +1,190 @@
+General Program Notes
+	The data and source code for the program can be downloaded from the Leaf website (http://www.bioinf.manchester.ac.uk/leaf/). The website also enables you to run PDB and user sequence culling queries.
+	The code was tested extensively on Windows Vista, and also on Windows XP and Ubuntu Linux.
+	A paper describing the Leaf algorithm, along with comparisons to other redundancy removal algorithms, can be found at http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0055484.
+
+Requirements For Using Leaf
+	A version of Python is needed to run Leaf. The code was designed for Python 2.7, but will likely work with Python 2.6. It will also work with Python 3.0 with minor syntactic changes.
+		Python can be downloaded from http://www.python.org/getit/.
+	The SciPy Python package is also needed to run Leaf. Make sure that the version of SciPy you download is compatible with the version of Python you have installed.
+		SciPy can be downloaded from http://www.scipy.org/Download.
+
+General Leaf Usage Notes
+	For general usage notes run the program using the -h or --help flags. For example, 'python PDBcontroller.py -h' or 'python userseqcontroller.py -h', without the enclosing ''.
+		Basic usage for non-PDB culling: python userseqcontroller.py /path/to/your/file
+		Basic usage for whole PDB culling: python PDBcontroller.py -w
+		Basic usage for non-whole PDB culling: python PDBcontroller.py -i /path/to/your/file
+
+	The directory containing the results of the culling will be placed within the directory that the culling program was called from. This is also the location where any temporary files needed will be written.
+	The results directory will overwrite any existing directory with the same name.
+
+Using Leaf to Cull the PDB
+	The expected format for the file containing the PDB chains/entries to cull is to have one chain/entry on a line, with no extra whitesapce on the lines.
+	When culling the PDB by chains, it is acceptable to supply entries. The entries will just be converted into all their constituent chains for the culling.
+		For example, if culling by chain and you supply the entry 4FCV, then this will be converted to 4FCVA, 4FCVB and 4FCVC.
+	
+	When culling the PDB by organism, the scientific name of the organism is expected (e.g. Homo_sapiens not human). The organism name is not case sensitive. The space between the genus and species should be replaced by an underscore (i.e. '_').
+
+	In order to use every chain in the PDB for culling make sure that the resolution is set to 100 and the R value to 1.
+
+Using Leaf to Cull User Supplied Sequences
+	When culling your own sequence in FASTA format the expected format is as follows:
+		>Protein A Identifier
+		SEQUENCEFORPROTEINAONONELINE
+		>Protein B Identifier
+		SEQUENCEFORPROTEINBONONELINE
+	The protein identifier must all be on one line, and the line must start with a '>'. Any number of characters can follow the '>', and there are no restrictions on the characters that are permitted. The protein identifier is taken to be every character after the '>' up to, but not including, the end of line character.
+	The sequence for the protein is expected to be in all capital letters, and occur on the first line after the identitifier line. However, the seqeunce can occur over multiple lines and contain lower case letters. The input FASTA file will simply be converted to the expected FASTA file format.
+
+Miscelaneous Program Notes
+	If you are making modifications to the code, the main thing to note is that the results of the Leaf algorithm are not the final results returned by the program.
+	This is because not all proteins are included in the protein similarity graph that is submitted to Leaf. For example, if a protein P does not have a pairwise sequence identity
+	greater than the permissible value with any other protein in the set, then protein P is not included in the protein similarity graph submitted to Leaf. This means that the maximal
+	independent set returned by Leaf will not contain protein P, despite the fact that P clearly belongs in the MIS. The program therefore records the proteins that Leaf
+	rejects from the maximal indpendent set, and records the kept proteins to be all the input proteins that have not been rejected (either based on similarity or because of criteria
+	like resolution for PDB culling).
+
+External Data/Executables Notes
+	There are two sets of files needed by the program.
+		1) The BLAST+ executables. The executables can be downloaded from ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/. Ensure that you download the correct version for your operating system.
+		   Place the executables in a directory called BlastExecutables within the directory that contains the Leaf source files. Only the psiblast and makeblastdb files are needed, but the entire set of executables can be placed in the folder.
+		2) The PDB data for culling the PDB. This is only needed if you intend to cull the PDB. The processed PDB files can be downloaded from http://www.bioinf.manchester.ac.uk/leaf/downloads/.
+		   Place the downloaded files in a directory called PDBData within the directory that contains the Leaf source files.
+
+Data/Results Format Notes
+	PDB Data
+		Experimental method abbreviations used
+			ELECTRON MICROSCOPY     		EM
+			FIBER DIFFRACTION       		FIBER
+			INFRARED SPECTROSCOPY   		FTIR
+			NEUTRON DIFFRACTION     		NEUTRON
+			SOLUTION NMR    				NMR
+			SOLID-STATE NMR         		NMR
+			POWDER DIFFRACTION      		POWDER
+			X-RAY DIFFRACTION       		XRAY
+			FLUORESCENCE TRANSFER   		NA
+			ELECTRON CRYSTALLOGRAPHY        NA
+			SOLUTION SCATTERING     		NA
+			Anything else is marked as NA.
+		Possible chain types used
+			DNA
+			DNA/polysaccharide
+			DNA/polysaccharide/RNA
+			DNA/RNA
+			NonProtein
+			polysaccharide
+			polysaccharide/RNA
+			Protein
+			RNA
+		AllPDBEntries.txt
+			A list of all the entries in the PDB.
+		ChainType.txt
+			A mapping between chains and types of chain. The two columns are separated by a tab ('\t'). The lefthand column contains the chain identifier, and the righthand column the chain type.
+		ProteinInformation.txt
+			A file recording all the information extracted about protein chains in the PDB. Each line corresponds to one chain, and all the elements of a chain are separated by tabs ('\t'). 
+			The elements recorded about each chain, from left to right, are:
+			ChainID	Entry	ExptAbbrv	Resolution	RValue	FreeRValue	AlphaCarbonOnly	ChainDescription	DBName	DBCode	OrganismName	Sequence
+			The possible experimental abbreviations can be found above.
+			A 0 for AlphaCarbonOnly indicates that the chain structure available does not only contain backbone alpha carbon atoms.
+			The chain description can contain additional whitespace, but does not contain any tabs.
+			The DBName is a PDB code for an external database (e.g. UNP for UniProt). The DBCode is the identifier, in the DBName database, for the chain.
+			Organism name is the scientific name of the organism, consisting of the genus and species separated by a space. The case of the orgnanism name is identical to the record in the PDB, 
+			and therefore there is no set format for it (e.g. both Mus musculus and MUS MUSCULUS can be found).
+		Representative.txt
+			A mapping between non-representative chains and representative ones. The two columns are separated by a tab ('\t'). The lefthand column contains the non-representative chain, 
+			and the righthand column contains the PDB chain which represents the non-representative chain. If a chain is representative, then it does not appear in the lefthand column at all. 
+			For example, if a chain X is representative, then there is no line where X appears in both the lefthand and righthand columns.
+		Similarity.txt
+			A record of the similarities between the representative chains in the PDB. There are seven columns, separated by tabs ('\t'). The values in the columns, from left to right, are:
+			UniqueIdentifier	ChainA	EntryA	ChainB	EntryB	PercentageSimilarity	LengthOfAlignment
+	PDB Results
+		Removed.txt
+			A list of the redundant chains/entries from either the whole PDB or the user input, with one chain/entry on each line.
+		KeptList.txt
+			A table of information about the non-redundnat chains/entries submitted by the user. Each line contains six values separated by tabs ('\t').
+			The values (from left to right) are as follows: the name of the chain/entry, the length (in amino acids) of the chain/entry (the length of an entry is the length of a random chain in the entry),
+			the abbreviation for the experimental method used to determine the structure, the resolution of the structure, the R-value and the free R-value.
+		KeptFasta.fasta
+			A FASTA format file of the chains in the non-redundant dataset. If cull by entry was selected, then this file contains all the chains in each non-redundnat entry that were not
+			removed by intra-entry culling of chains. Each chain is represented by two consecutive lines in the file. First is an identifier line for the chain, followed by the sequence
+			of the chain in all capital letters. The format of the identifier line (from left to right) is as follows:
+			>ChainID	ChainLength	ExperimentalMethod	Resolution	R-value	FreeR-value	AlphaCarbonOnly	ChainDescription	<DBCode DBIdentifier>	[OrganismName]
+			Tabs separate the values on the line. There may be additional whitespace in the ChainDescription. AlphaCarbonOnly is 'no' if the chain structure is not purely composed of
+			alpha carbon atoms. The DBCode is the code used by the PDB to record an external database where information about the chain can be found (e.g. UNP for UniProt), and the
+			DBIdentifier is the identifier used to locate the chain in the external database (e.g. VAV_MOUSE). The OrganismName is case insensitive, and appears exactly as it was
+			recorded in the PDB (e.g. Mus musculus and MUS MUSCULUS may both appear).
+	User Culling Results
+		Removed.txt
+			A list of the input proteins that are redundant.
+		KeptList.txt
+			A table of information about the non-redundant input proteins. The two columns are separated by tabs ('\t'). The first column contains protein identifiers,
+			and the second contains the length of the proteins.
+		KeptFasta.fasta
+			A FASTA fromat file of the non-redundant input proteins.
+
+Data Collection Notes
+	If 50% or more of the amino acids in an amino acid sequence are X (i.e. unspecified or unknown), then the entity is marked as a NonProtein, and not included in the list of proteins.
+	When determining the value for the resolution:
+		Only one of the _refine and _reflns records is used (with preference given to the _refine record).
+		If there is no value present for the resolution, then it is set to 100.
+		Similariy if there is no value present for the R-value or the R-free value, then these values are set to 1.
+	When determining the organism which the entity originates from:
+		Only one of _entity_src_gen, _entity_src_nat or _pdbx_entity_src_syn is used (with preference given in the order _entity_src_nat, _entity_src_gen and finally _pdbx_entity_src_syn).
+
+	_entry
+		_entry.id
+			Used to determine the name of the PDB entry (e.g. 3A0B).
+	_entity
+		_entity.id
+			The numeric identifier used to identify the specific entity within the entry record.
+		_entity.pdbx_description
+			A description of the entity.
+	_entity_poly
+		_entity_poly.entity_id
+			Used to determine the entity that the rest of the _entity_poly information pertains to.
+		_entity_poly.type
+			Used to determine the type of the entity (e.g. polypeptide(L)).
+		_entity_poly.pdbx_seq_one_letter_code_can
+			Used to determine the nucleotide or amino acid sequence of the entity.
+		_entity_poly.pdbx_strand_id
+			Used to determine the single character codes corresponding to the entity (the 'a', 'A', 'b', '1', etc. that comes after the entry e.g. 3A0Ba, 3A0BA, ...).
+	_exptl
+		_exptl.method
+			The experimental method that was used to determine the structure.
+	_atom_site
+		_atom_site.label_atom_id
+			Records the type of atom. Used to determine if the entity contains only alpha carbon atoms.
+		_atom_site.label_entity_id
+			Used to determine the entity that the rest of the _atom_site information pertains to.
+	_refine
+		_refine.ls_d_res_high
+			Used to determine the resolution of the structure in an X-ray diffraction experiment.
+		_refine.ls_R_factor_obs
+			Used to determine the R-value. This is the R-value measurement used when giving an upper bound on the R-value during culling.
+		_refine.ls_R_factor_R_free
+			Used to determine the R-free value.
+	_reflns
+		_reflns.d_resolution_high
+			Used to determine the resolution of the structure in an X-ray diffraction experiment.
+	_struct_ref
+		_struct_ref.entity_id
+			Used to determine the entity that the rest of the _struct_ref information pertains to.
+		_struct_ref.db_name
+			Used to determine the name of the external database linked to the entity.
+		_struct_ref.db_code
+			Used to determine the code which can be used to access information about the entity in the external database
+	_entity_src_gen
+		_entity_src_gen.entity_id
+			Used to determine the entity that the rest of the _entity_src_gen information pertains to.
+		_entity_src_gen.pdbx_gene_src_scientific_name
+			Used to determine the scientific name of the organism that the entity came from.
+	_entity_src_nat
+		_entity_src_nat.entity_id
+			Used to determine the entity that the rest of the _entity_src_nat information pertains to.
+		_entity_src_nat.pdbx_organism_scientific
+			Used to determine the scientific name of the organism that the entity came from.
+	_pdbx_entity_src_syn
+		_pdbx_entity_src_syn.entity_id
+			Used to determine the entity that the rest of the _pdbx_entity_src_syn information pertains to.
+		_pdbx_entity_src_syn.organism_scientific
+			Used to determine the scientific name of the organism that the entity came from.

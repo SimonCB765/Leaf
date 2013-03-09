@@ -44,7 +44,7 @@ def main():
                         action='store_true', default=False, required=False)
     parser.add_argument('-c', '--cores', help='The number of processor cores to use for BLASTing. (Required type: %(type)s, default value: %(default)s).',
                         metavar="cores", type=int, default=2, required=False)
-    parser.add_argument('-o', '--output', help='The name of the output directory to create in the current working directory. (Required type: %(type)s, default value: %(default)s).',
+    parser.add_argument('-o', '--output', help='The name of the output directory to create in the current working directory. (Required type: %(type)s, default value: a directory called %(default)s in the current working directory).',
                         metavar="outputFolder", type=str, default='CullResults', required=False)
     parser.add_argument('-v', '--verbose', help='Whether status updates should be displayed. (Default value: No status updates).',
                         action='store_true', default=False, required=False)
@@ -91,7 +91,10 @@ def main():
     if verboseOutput:
         print 'Creating the output directory.'
     cwd = os.getcwd()
-    outputLocation = cwd + '/' + cullOperationID
+    if cullOperationID == 'CullResults':
+        outputLocation = cwd + '/' + cullOperationID
+    else:
+        outputLocation = cullOperationID
     try:
         if os.path.isdir(outputLocation):
             shutil.rmtree(outputLocation)
@@ -155,15 +158,17 @@ def main():
     recording = False
     uniqueProteins = []  # Used to ensure no duplicates get through.
     for line in readFasta:
-        if line[0] == '>' and not line[1:-1] in proteinsToCull and not line in uniqueProteins:
-            # If the line starts a new protein definition, and that protein is one of the ones to keep.
-            recording = True
-            uniqueProteins.append(line)
-            writeOutKeepFasta.write(line)
-            writeOutKeepList.write(line[1:-1])
-        elif line[0] == '>':
-            # If the line start a new protein definition, but the protein is not one of the ones to keep.
-            recording = False
+        if line[0] == '>':
+            notInToCull = len([i for i in proteinsToCull if line[1 : len(i) + 1] == i]) == 0
+            if notInToCull and not line in uniqueProteins:
+                # If the line starts a new protein definition, and that protein is one of the ones to keep.
+                recording = True
+                uniqueProteins.append(line)
+                writeOutKeepFasta.write(line)
+                writeOutKeepList.write(line[1:-1])
+            else:
+                # If the line start a new protein definition, but the protein is not one of the ones to keep.
+                recording = False
         else:
             # Otherwise the line is a protein sequence.
             if recording:
