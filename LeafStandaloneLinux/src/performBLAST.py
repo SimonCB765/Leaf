@@ -13,14 +13,14 @@ import processPSIoutput
 
 def main(inputFile, databaseFile, blastOperationID, SEG=False, cores=2, minAlignLength=20, maxEValue=1.0, verboseOutput=False):
     """Perform the BLASTing of the proteins in an input file (inputFile) against those in another file (databaseFile).
-    
+
     Returns a dictionary of the similarities between proteins, as determined by BLAST. The dictionary is indexed by a
     alphanumerically ordered tuple (index[0] < index[1]), and the entry for each index is a dictionary recording
     {'Identity' : identity, 'Length' : alignLength, 'EValue' : evalue}.
-    
+
     The BLAST version used must be the C++ version. If a different version is being used (i.e. the old C version), then
     parameters like the number of cores can not be used.
-    
+
     @param inputFile: The location of a FASTA format file of the proteins to BLAST against the proteins in databaseFile.
     @type inputFile : string
     @param databaseFile: The location of a FASTA format file of the proteins from which the BLASTable database should be generated.
@@ -39,28 +39,28 @@ def main(inputFile, databaseFile, blastOperationID, SEG=False, cores=2, minAlign
     @type verboseOutput:  boolean
     return @type: dictionary
     return @use:  A record of the similarities between the proteins
-    
+
     """
-    
+
     # Get the location of the BLAST executables.
     srcLocation = os.path.abspath(__file__)
     srcLocation = '/'.join(srcLocation.split('/')[:-1])
     BLASTExecutables = srcLocation + '/BLASTExecutables'
     cwd = os.getcwd()
-    outputLocation = cwd + '/' + blastOperationID
+    outputLocation = blastOperationID
     if os.path.exists(outputLocation):
         shutil.rmtree(outputLocation)
     os.mkdir(outputLocation)
-    
+
     # Make a BLASTable database from the database file.
     if verboseOutput:
         print 'Creating the BLASTable database.'
     databaseDir = outputLocation + '/TempDatabase'
     os.mkdir(databaseDir)
     os.mkdir(databaseDir + '/TempDB')
-    makeDBArgs = BLASTExecutables + '/makeblastdb -in ' + databaseFile + ' -out ' + databaseDir + '/TempDB -dbtype prot'
-    subprocess.call(makeDBArgs, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    
+    makeDBArgs = [BLASTExecutables + '/makeblastdb', '-in', databaseFile, '-out', databaseDir + '/TempDB', '-dbtype', 'prot']
+    subprocess.Popen(makeDBArgs, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
     # Loop through the input file and create a FASTA format file for each individual protein.
     if verboseOutput:
         print 'Generating a FASTA file of each sequence.'
@@ -73,21 +73,21 @@ def main(inputFile, databaseFile, blastOperationID, SEG=False, cores=2, minAlign
             # If the line starts a new protein definition.
             if protCount == 0:
                 # If this is the first protein definition found.
-                proteinWrite = open(proteinDir + '\Prot' + str(protCount) + '.fasta', 'w')
+                proteinWrite = open(proteinDir + '/Prot' + str(protCount) + '.fasta', 'w')
                 proteinWrite.write(line)
             else:
                 # If this is not the first protein definition found.
                 proteinWrite.close()
-                proteinWrite = open(proteinDir + '\Prot' + str(protCount) + '.fasta', 'w')
+                proteinWrite = open(proteinDir + '/Prot' + str(protCount) + '.fasta', 'w')
                 proteinWrite.write(line)
             protCount += 1
         else:
             # Otherwise the line is a protein sequence.
             proteinWrite.write(line)
-    
+
     proteinWrite.close()
     fullFASTA.close()
-    
+
     # BLAST each of the individual protein FASTA files just made against the database generated from databaseFile.
     if verboseOutput:
         print 'Starting to BLAST each file.'
@@ -101,7 +101,7 @@ def main(inputFile, databaseFile, blastOperationID, SEG=False, cores=2, minAlign
             fileCount += 1
         sequence_BLAST(processedBLAST, proteinDir + '/' + file, databaseDir + '/TempDB', BLASTExecutables + '/psiblast',
                        SEG, cores)
-    
+
     # Parse the processed BLAST output, and record the similarities between the different proteins.
     if verboseOutput:
         print 'Now parsing the processed BLAST output.'
@@ -133,13 +133,13 @@ def main(inputFile, databaseFile, blastOperationID, SEG=False, cores=2, minAlign
     except:
         time.sleep(60)
         shutil.rmtree(outputLocation)
-    
+
     return similarities
 
 
 def sequence_BLAST(processedBLAST, inputFile, database, BLASTLoc, SEG, cores):
     """Will perform the process of BLAST -> PROCESS OUTPUT on inputFile.
-    
+
     @param processedBLAST: The location at which to write the output of the processing of the BLAST output.
     @type processedBLAST: string
     @param inputFile: The FASTA file which needs to be submitted to PSI-BLAST.
@@ -152,31 +152,41 @@ def sequence_BLAST(processedBLAST, inputFile, database, BLASTLoc, SEG, cores):
     @type SEG: boolean
     @param cores: The number of threads to create to run BLAST with.
     @type cores: character
-    
-    """ 
+
+    """
 
     # Setup the parameters for the BLASTing.
-    outputLoc = inputFile.split('.')[0] + '.tmp'    
-    query = ' -query ' + inputFile
-    out = ' -out ' + outputLoc
-    evalue = ' -evalue 1'
-    inclusionEThresh = ' -inclusion_ethresh 0.0001'
-    numIterations = ' -num_iterations 3'
-    gapTrigger = ' -gap_trigger 18'
-    numDescriptions = ' -num_descriptions 10000'
-    numAlignments = ' -num_alignments 10000'
-    dbsize = ' -dbsize 0'
-    db = ' -db ' + database
-    outputFormat = ' -outfmt "7 qseqid sseqid pident length evalue"'
+    argsPSI = []
+    outputLoc = inputFile.split('.')[0] + '.tmp'
+    argsPSI.append(BLASTLoc)
+    argsPSI.append('-query')
+    argsPSI.append(inputFile)
+    argsPSI.append('-out')
+    argsPSI.append(outputLoc)
+    argsPSI.append('-evalue')
+    argsPSI.append('1')
+    argsPSI.append('-num_iterations')
+    argsPSI.append('3')
+    argsPSI.append('-gap_trigger')
+    argsPSI.append('18')
+    argsPSI.append('-num_descriptions')
+    argsPSI.append('10000')
+    argsPSI.append('-num_alignments')
+    argsPSI.append('10000')
+    argsPSI.append('-dbsize')
+    argsPSI.append('0')
+    argsPSI.append('-db')
+    argsPSI.append(database)
+    argsPSI.append('-outfmt')
+    argsPSI.append('7 qseqid sseqid pident length evalue')
+    argsPSI.append('-seg')
     if SEG:
-        seg = ' -seg yes'
+        argsPSI.append('yes')
     else:
-        seg = ' -seg no'
-    numThreads = ' -num_threads ' + str(cores)
-    argsPSI = (query + out + evalue + inclusionEThresh + numIterations + gapTrigger + numDescriptions +
-               numAlignments + dbsize + db + outputFormat + seg + numThreads
-               )
+        argsPSI.append('no')
+    argsPSI.append('-num_threads')
+    argsPSI.append(str(cores))
     # Perform the BLASTing.
-    subprocess.call(BLASTLoc + argsPSI, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    subprocess.call(argsPSI, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     # Process the BLAST output.
     processPSIoutput.main(outputLoc, processedBLAST)

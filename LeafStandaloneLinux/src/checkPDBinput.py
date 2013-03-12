@@ -6,7 +6,7 @@ Created on 5 Feb 2011
 
 def main(listToCheck, allChains={}, allEntries=[], allProtEntries=[], checkType='chain'):
     """Checks whether the chains/entries provided as input are valid protein chains or entries that contain a protein chain.
-    
+
     @param listToCheck: The list of chains/entries to check.
     @type listToCheck : list
     @param allChains: A dictionary mapping each chain in the PDB to its type (e.g. Protein, DNA, RNA, etc.). Only needed when checkType == 'chain'.
@@ -19,7 +19,7 @@ def main(listToCheck, allChains={}, allEntries=[], allProtEntries=[], checkType=
     @type checkType : string
     return @type: integer, unicode string
     return @use:  the numerical code for the error, the error message or the valid chains/entries
-    
+
     """
 
     listToCheck = set([i.strip().upper() for i in listToCheck])  # Remove any extra whitespace, and convert all chains/entries to uppercase.

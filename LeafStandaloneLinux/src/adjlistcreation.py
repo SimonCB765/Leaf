@@ -8,11 +8,11 @@ import sparsematrix
 
 def pdb_chain_main(similarities, cutoffPercent=20, representativeChains=set([])):
     """Create a sparse matrix representation of a protein similarity graph.
-    
+
     Returns a sparsematrix representing the protein similarity graph, and a list of the names of the protein in the sparsematrix.
     The proteins in the list are ordered such that the name of the node in the graph identified as node i is at position i
     in the list of names.
-    
+
     @param similarities: A record of the percentage sequence identity between the chains up for culling.
     @type similarities : string (file name)
     @param cutoffPercent: A percentage similarity > this parameter is deemed to be too similar.
@@ -21,7 +21,7 @@ def pdb_chain_main(similarities, cutoffPercent=20, representativeChains=set([]))
     @type representativeChains:  set
     return @type: SparseMatrix, list
     return @use:  The SparseMatrix representation of the protein similarity graph, a list of the names of the proteins in the graph (element i of this list is the name of the protein represented by node i in the graph)
-    
+
     """
 
     proteinNames = set([])  # Store the names of all the proteins found to be too similar to another protein
@@ -39,28 +39,28 @@ def pdb_chain_main(similarities, cutoffPercent=20, representativeChains=set([]))
             proteinNames.add(chainB)
             similarProteins.add(tuple(sorted([chainA, chainB])))
     readSimilarityData.close()
-        
+
     proteinNames = list(proteinNames)
     proteinNames.sort()
     similarProteins = list(similarProteins)
     indexDict = dict((proteinNames[x], x) for x in range(len(proteinNames)))
-    
+
     # Create the sparse matrix
     adjacent = sparsematrix.SparseMatrix(len(proteinNames))
     xValues = [indexDict[x] for (x,y) in similarProteins]
     yValues = [indexDict[y] for (x,y) in similarProteins]
     adjacent.addlist(xValues, yValues)
     adjacent.addlist(yValues, xValues)
-    
+
     return adjacent, proteinNames
 
 def pdb_entry_main(similarities, cutoffPercent=20, representativeChains=set([]), representativesReverse=set([])):
     """Create a sparse matrix representation of a protein similarity graph.
-    
+
     Returns a sparsematrix representing the protein similarity graph, and a list of the names of the protein in the sparsematrix.
     The proteins in the list are ordered such that the name of the node in the graph identified as node i is at position i
     in the list of names.
-    
+
     @param similarities: A record of the percentage sequence identity between the chains up for culling.
     @type similarities : string (file name)
     @param cutoffPercent: A percentage similarity > this parameter is deemed to be too similar.
@@ -71,7 +71,7 @@ def pdb_entry_main(similarities, cutoffPercent=20, representativeChains=set([]),
     @type representativesReverse:  dictionary
     return @type: SparseMatrix, list
     return @use:  The SparseMatrix representation of the protein similarity graph, a list of the names of the proteins in the graph (element i of this list is the name of the protein represented by node i in the graph)
-    
+
     """
 
     entryNames = set([])  # Store the names of all the proteins found to be too similar to another protein
@@ -105,23 +105,23 @@ def pdb_entry_main(similarities, cutoffPercent=20, representativeChains=set([]),
     entryNames.sort()
     similarEntries = list(similarEntries)
     indexDict = dict((entryNames[x], x) for x in range(len(entryNames)))
-    
+
     # Create the sparse matrix
     adjacent = sparsematrix.SparseMatrix(len(entryNames))
     xValues = [indexDict[x] for (x,y) in similarEntries]
     yValues = [indexDict[y] for (x,y) in similarEntries]
     adjacent.addlist(xValues, yValues)
     adjacent.addlist(yValues, xValues)
-    
+
     return adjacent, entryNames
 
 def intra_entry_main(similarities, cutoffPercent, representativeChains, entryToRepChain):
     """Create a sparse matrix representation of a protein similarity graph.
-    
+
     Returns a sparsematrix representing the protein similarity graph, and a list of the names of the protein in the sparsematrix.
     The proteins in the list are ordered such that the name of the node in the graph identified as node i is at position i
     in the list of names.
-    
+
     @param similarities: A record of the percentage sequence identity between the chains up for culling.
     @type similarities : string (file name)
     @param cutoffPercent: A percentage similarity > this parameter is deemed to be too similar.
@@ -132,11 +132,11 @@ def intra_entry_main(similarities, cutoffPercent, representativeChains, entryToR
     @type entryToRepChain:  dictionary
     return @type: SparseMatrix, list
     return @use:  The SparseMatrix representation of the protein similarity graph, a list of the names of the proteins in the graph (element i of this list is the name of the protein represented by node i in the graph)
-    
+
     """
 
     similarProteins = {}  # Store the pairs that are too similar
-    
+
     readSimilarityData = open(similarities, 'r')
     for i in readSimilarityData:
         chunks = (i.strip()).split('\t')
@@ -170,7 +170,7 @@ def intra_entry_main(similarities, cutoffPercent, representativeChains, entryToR
         chainNames.sort()
         adjacencies = list(adjacencies)
         indexDict = dict((chainNames[x], x) for x in range(len(chainNames)))
-        
+
         # Create the sparse matrix
         adjacent = sparsematrix.SparseMatrix(len(chainNames))
         xValues = [indexDict[x] for (x,y) in adjacencies]
@@ -185,18 +185,18 @@ def intra_entry_main(similarities, cutoffPercent, representativeChains, entryToR
 
 def user_seq_main(similarities, cutoffPercent=20):
     """Create a sparse matrix representation of a protein similarity graph.
-    
+
     Returns a sparsematrix representing the protein similarity graph, and a list of the names of the protein in the sparsematrix.
     The proteins in the list are ordered such that the name of the node in the graph identified as node i is at position i
     in the list of names.
-    
+
     @param similarities: A dictionary containing the information about the simialrity between the proteins.
     @type similarities : dictionary
     @param cutoffPercent: A percentage similarity > this parameter is deemed to be too similar.
     @type cutoffPercent :  float
     return @type: SparseMatrix, list
     return @use:  The SparseMatrix representation of the protein similarity graph, a list of the names of the proteins in the graph (element i of this list is the name of the protein represented by node i in the graph)
-    
+
     """
 
     proteinNames = set([])  # Store the names of all the proteins found to be too similar to another protein
@@ -208,19 +208,17 @@ def user_seq_main(similarities, cutoffPercent=20):
         proteinNames.add(i[0])
         proteinNames.add(i[1])
         similarProteins.add(i)
-        
+
     proteinNames = list(proteinNames)
     proteinNames.sort()
     similarProteins = list(similarProteins)
     indexDict = dict((proteinNames[x], x) for x in range(len(proteinNames)))
-    
+
     # Create the sparse matrix
     adjacent = sparsematrix.SparseMatrix(len(proteinNames))
     xValues = [indexDict[x] for (x,y) in similarProteins]
     yValues = [indexDict[y] for (x,y) in similarProteins]
     adjacent.addlist(xValues, yValues)
     adjacent.addlist(yValues, xValues)
-    
-    return adjacent, proteinNames
 
-        
+    return adjacent, proteinNames

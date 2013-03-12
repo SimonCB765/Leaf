@@ -6,26 +6,26 @@ Created on 3 Feb 2011
 
 def main(PSIoutput, processedLoc):
     """Extracts the relevant information from the PSI-BLAST output.
-    
+
     @param PSIoutput: The location of the file containing the PSI-BLAST results.
     @type PSIoutput:  string
     @param processedLoc: The location to write the results of the processing to. If this location already exists
                          then the results will be appended to the existing file. If not the file will be created.
     @type processedLoc:  string
-    
+
     """
-    
+
     queryProtein = ''  # Records the protein used to query the database
     previousRoundOutput = ''  # Record the information to output as a string
     currentRoundOutput = ''  # Record the information to output as a string
     previousRoundHits = {}  # Record the hits from the previous round to prevent drift in the PSSM
     currentRoundHits = {}  # Record the hit proteins from the current round to prevent drift
     driftFound = False  # Used to exit and write out the results if drift is found
-    
+
     BLASTOutput = open(PSIoutput, 'r')
-    
+
     for line in BLASTOutput:
-        
+
         chunks = line.split()
 
         if len(chunks) == 0:
@@ -54,7 +54,7 @@ def main(PSIoutput, processedLoc):
             currentRoundOutput += line
 
     BLASTOutput.close()
-    
+
     outputResults = open(processedLoc, 'a')
     outputResults.write(currentRoundOutput)
     outputResults.close()

@@ -6,14 +6,14 @@ Created on 28 Mar 2011
 
 def pruneGraph(adjList, IDs):
     """The method by which the Leaf algorithm determines which nodes to remove from the graph.
-    
+
     @param adjList: An adjacency list representation of the protein similarity graph.
     @type adjList : dictionary
     @param IDs: A list of the numerical indices of the nodes in the graph.
     @type IDs : list
-    
+
     """
-    
+
     removeList = []
     nodesInGraph = adjList.keys()
     if nodesInGraph == []:
@@ -35,8 +35,8 @@ def pruneGraph(adjList, IDs):
             continue
         else:
             neighbours[i] = set([])
-        
-    
+
+
     while True:
 
         # Determine the maximum number of neighbours.
@@ -44,7 +44,7 @@ def pruneGraph(adjList, IDs):
         while neighbours[maxNeighbours] == set([]):
             del neighbours[maxNeighbours]
             maxNeighbours = max(neighbours.keys())
-        
+
         # If there are no nodes with neighbours then exit.
         if maxNeighbours == 0:
             return removeList
@@ -115,7 +115,7 @@ def pruneGraph(adjList, IDs):
             toRemove = nodesWithMaxNeighbours[sizes.index(minSize)]
         else:
             toRemove = nodesWithMaxNeighbours[0]
-      
+
         removeList.append(toRemove)
         # Update the list of neighbours for each node that toRemove is adjacent to.
         for i in adjList[toRemove]:
@@ -130,12 +130,12 @@ def pruneGraph(adjList, IDs):
 
 def main(adj, names):
     """Use the Leaf heuristic method to calculate an approximation to the maximum independent set.
-    
+
     Returns a list of the proteins to keep and a list of the proteins to cull. The list of proteins to keep only contains the
     names of the proteins in the protein similarity graph that should be kept. If there are any proteins that were not
     included in adj (for example proteins with no neighbours), then these will NOT be included in the list of proteins to keep.
     See the README for a more in depth description of this.
-    
+
     @param adj: A sparsematrix representation of the protein similarity graph
     @type adj : sparsematrix
     @param names: A list of the names of the proteins in adj. Ordered such that the name of the protein represented by node i

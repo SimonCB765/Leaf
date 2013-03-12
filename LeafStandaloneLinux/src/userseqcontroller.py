@@ -17,12 +17,12 @@ import Leafcull
 
 def main():
     """Runs the protein culling.
-    
+
     @param args: The command line arguments.
     @type args: A Python list.
-    
+
     """
-    
+
     #===========================================================================
     # Parse the user's input.
     #===========================================================================
@@ -49,7 +49,7 @@ def main():
     parser.add_argument('-v', '--verbose', help='Whether status updates should be displayed. (Default value: No status updates).',
                         action='store_true', default=False, required=False)
     args = parser.parse_args()
-    
+
     inputFile = args.inputFile
     sequenceIdentity = args.percent
     minLength = args.minLen
@@ -70,16 +70,16 @@ def main():
     if sequenceIdentity < 5 or sequenceIdentity >= 100:
         print 'The maximum allowable percentage sequence similarity must be no less than 5, and less than 100.'
         toExit = True
-    
+
     if minLength < 0:
         minLength = -1
     if maxLength < 0:
         maxLength = -1
-    
+
     if minLength > maxLength:
         print 'The minimum sequence length must be less than the maximum sequence length.'
         toExit = True
-    
+
     if toExit:
         sys.exit()
 
@@ -105,7 +105,7 @@ def main():
         print 'The output directory could not be created. Please check the location specified in  the input parameters.'
         print 'If you did not specify a location then consider changing the default output location (the variable cullOperationID)'
         sys.exit()
-    
+
     # Ensure that the FASTA file input is appropriately formatted.
     if verboseOutput:
         print 'Validating the input file.'
@@ -120,17 +120,17 @@ def main():
     writeOut = open(fileToBLAST, 'w')
     writeOut.write(message)
     writeOut.close()
-    
+
     # Perform the BLASTing.
     if verboseOutput:
         print 'Starting the BLASTing.'
-    similarities = performBLAST.main(fileToBLAST, fileToBLAST, cullOperationID + '/BLASTOutput', SEG, cores, verboseOutput=verboseOutput)
-    
+    similarities = performBLAST.main(fileToBLAST, fileToBLAST, outputLocation + '/BLASTOutput', SEG, cores, verboseOutput=verboseOutput)
+
     # Create the sparsematrix of the protein similarity graph.
     if verboseOutput:
         print 'Creating the adjacency matrix'
     adjList, protNames = adjlistcreation.user_seq_main(similarities, sequenceIdentity)
-    
+
     # Choose which proteins to remove from the similarity graph.
     if verboseOutput:
         print 'Performing the culling.'
@@ -140,16 +140,16 @@ def main():
         proteinsToCull = []
     else:
         proteinsToCull, proteinsToKeep = Leafcull.main(adjList, protNames)
-    
+
     if verboseOutput:
         print 'Writing out the results.'
-    
+
     # Write out the proteins that were removed.
     writeOutRem = open(outputLocation + '/Removed.txt', 'w')
     for i in proteinsToCull:
         writeOutRem.write(i + '\n')
     writeOutRem.close()
-    
+
     # Write out a FASTA file of the proteins kept.
     writeOutKeepFasta = open(outputLocation + '/KeptFasta.fasta', 'w')
     writeOutKeepList = open(outputLocation + '/KeptList.txt', 'w')

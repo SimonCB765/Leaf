@@ -6,23 +6,23 @@ Created on 2 Feb 2011
 
 def main(fileToCheck, minLength=-1, maxLength=-1):
     """Determines whether fileToCheck is an appropriately formatted FASTA file.
-    
+
     An appropriately formatted FASTA file is returned in correctFormatting.
-    
+
     FASTA files are accepted if they have the format:
     >PID1
     letters
     >PID2
     letters
-    
+
     Where PID1 and PID2 can be anything, and letters are a (possibly multiline) sequence of alphabetic letters.
     The letters can be upper or lower case, and each letter is interpreted as one amino acid.
     The correctly formatted FASTA file is returned with the sequence only going over one line, and all letters
     in upper case.
-    
+
     If a protein (i.e. a FASTA information line) appears in the file more than one time, then the final appearance is
     taken to be the correct one. Prior appearances are discarded.
-    
+
     @param fileToCheck: A string containing the contents of a potential FASTA format file.
     @type fileToCheck : string
     @param minLength: The minimum length that a protein sequence in the FASTA file is permitted to be.
@@ -31,16 +31,16 @@ def main(fileToCheck, minLength=-1, maxLength=-1):
     @type maxLength : integer
     return @type: integer, unicode string
     return @use:  the numerical code for the error, the error message or the valid FASTA format contents
-    
+
     """
-    
+
     # Initialise variables.
     lineCount = 1  # The number of the line being examined. Used for displaying error messages.
     protDescription = True  # Whether or not we are currently expecting a line starting with >.
     firstLine = True  # Whether or not we are currently examining the first line of the file.
     proteinsInFile = {}  # A dictionary indexed by the protein description line of the FASTA file.
                          # The value of each entry is the correctly formatted protein sequence corresponding to the index.
-    
+
     # Strip off all excess whitespace, and split the string into the individual lines of the file.
     checking = fileToCheck.rstrip()
     checking = checking.lstrip()
@@ -68,7 +68,7 @@ def main(fileToCheck, minLength=-1, maxLength=-1):
                 # specified bounds.
                 if minLength == -1:
                     if maxLength == -1:
-                        # If there are no restrictions on the protein sequence length, then record the protein and its sequence. 
+                        # If there are no restrictions on the protein sequence length, then record the protein and its sequence.
                         proteinsInFile[currentProt] = currentSeq
                     elif len(currentSeq) <= maxLength:
                         # If there is no minimum length restriction, and the protein sequence is not longer than the maximum
@@ -108,9 +108,9 @@ def main(fileToCheck, minLength=-1, maxLength=-1):
                 # If the line did not contain only letters, terminate the program.
                 errorMessage = "Expected line " + str(lineCount) + " to contain only letters, but instead got: " + line
                 return 2, errorMessage
-        
+
         lineCount += 1
-    
+
     # Catch the final protein from the file, and determine whether it should be recorded.
     if minLength == -1:
         if maxLength == -1:

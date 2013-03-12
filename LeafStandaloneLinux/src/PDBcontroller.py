@@ -18,12 +18,12 @@ import checkPDBinput
 
 def main(args):
     """Runs the protein culling.
-    
+
     @param args: The command line arguments.
     @type args: A Python list.
-    
+
     """
-    
+
     #===========================================================================
     # Parse the user's input.
     #===========================================================================
@@ -41,7 +41,7 @@ def main(args):
                        action='store_true', default=False)
     group.add_argument('-n', '--organism', help="Cull chains/entries from a specified organism. Replace spaces with underscores ('_'). (Required type: %(type)s).",
                        metavar="organismName", type=str, default='')
-    
+
     parser.add_argument('-p', '--percent', help='The maximum percent sequence identity between sequences. 5 <= maxPercent < 100 must be true. (Required type: %(type)s, default value: %(default)s).',
                         metavar="maxPercent", type=float, default=20, required=False)
     parser.add_argument('-q', '--minRes', help='The minimum resolution a chain/entry can have. 0 <= minResolution <= 100 must be true. Must not be greater than the maximum resolution. (Required type: %(type)s, default value: %(default)s).',
@@ -66,12 +66,12 @@ def main(args):
                         metavar="maxIntraEntryPercent", type=float, default=20, required=False)
     parser.add_argument('-d', '--dataloc', help='The location of the directory that contains the processed PDB data (required type: %(type)s, default value: in the directory this script is being called from).',
                         metavar="dataFileDir", type=str, default='', required=False)
-    parser.add_argument('-o', '--output', help='The name of the output directory to create in the current working directory. (Required type: %(type)s, default value: %(default)s).',
+    parser.add_argument('-o', '--output', help='The name of the output directory to create in the current working directory. (Required type: %(type)s, default value: a directory called %(default)s in the current working directory).',
                         metavar="outputFolder", type=str, default='PDBCullResults', required=False)
     parser.add_argument('-v', '--verbose', help='Whether status updates should be displayed. (Default value: No status updates).',
                         action='store_true', default=False, required=False)
     args = parser.parse_args()
-    
+
     wholePDB = args.whole
     cullByOrganism = ' '.join(args.organism.split('_'))
     userInput = args.inputFile
@@ -116,15 +116,15 @@ def main(args):
     if minResolution < 0 or minResolution > 100:
         print 'The valid range for the minimum resolution is 0 - 100.'
         toExit = True
-    
+
     if maxResolution < 0 or maxResolution > 100:
         print 'The valid range for the maximum resolution is 0 - 100.'
         toExit = True
-    
+
     if minResolution > maxResolution:
         print 'The minimum resolution must be less than or equal to the maximum resolution.'
         toExit = True
-    
+
     if maxRValue < 0 or maxRValue > 1:
         print 'The valid range for the maximum R value is 0 - 1.'
         toExit = True
@@ -139,22 +139,25 @@ def main(args):
         cont = raw_input('--> ')
         if cont.upper() != 'Y':
             toExit = True
-    
+
     if minLength < 0:
         minLength = -1
     if maxLength < 0:
         maxLength = -1
-    
+
     if minLength > maxLength:
         print 'The minimum sequence length must be less than the maximum sequence length.'
         toExit = True
 
     if toExit:
         sys.exit()
-    
+
     # Create the directory to store the output in.
     cwd = os.getcwd()
-    outputLocation = cwd + '/' + cullOperationID
+    if cullOperationID == 'PDBCullResults':
+        outputLocation = cwd + '/' + cullOperationID
+    else:
+        outputLocation = cullOperationID
     try:
         if os.path.isdir(outputLocation):
             shutil.rmtree(outputLocation)
@@ -174,20 +177,20 @@ def main(args):
     representativeData = dataFileDir + '/' + 'Representative.txt'
     similarityData = dataFileDir + '/' + 'Similarity.txt'
     proteinData = dataFileDir + '/' + 'ProteinInformation.txt'
-    
+
     PDBEntriesList = []
     readPDBEntriesData = open(PDBEntriesData, 'r')
     for i in readPDBEntriesData:
         PDBEntriesList.append(i.strip())
     readPDBEntriesData.close()
-    
+
     chainTypeDict = {}
     readChainTypeData = open(chainTypeData, 'r')
     for i in readChainTypeData:
         chunks = (i.strip()).split('\t')
         chainTypeDict[chunks[0]] = chunks[1]
     readChainTypeData.close()
-    
+
     proteinDict = {}
     readProteinData = open(proteinData, 'r')
     for i in readProteinData:
@@ -256,7 +259,7 @@ def main(args):
             print 'to a misspelling of the organism name.'
             sys.exit()
         retVal = '\n'.join(retVal)
-    
+
     if verboseOutput:
         startTime = time.time()
     if not cullByChain:
@@ -375,7 +378,7 @@ def main(args):
 
     if verboseOutput:
         print 'Potential chains: ', len(potentialChains), 'Valid chains: ', len(chainsToCull)
-        
+
     # Determine representative chain information.
     # representatives records the non-representative to representative chain mapping for the non-representative
     # chains in the set of chains to cull.
@@ -404,7 +407,7 @@ def main(args):
         else:
             representativesReverse[reprChain] = set([i])
     representativesReverseKeys = representativesReverse.keys()
-    
+
     if verboseOutput:
         print 'Now beginning the culling. Time elapsed: ', time.time() - startTime
 
@@ -435,7 +438,7 @@ def main(args):
                     else:
                         entryToChain[entry] = [chain]
             readProteinData.close()
-            
+
             representatives = {}  # Records the non-representative to representative chain mapping for all chains in non-redundant user input entries.
             readRepresentativeData = open(representativeData, 'r')
             for i in readRepresentativeData:
@@ -454,7 +457,7 @@ def main(args):
                     representativesReverse[reprChain].add(i)
                 else:
                     representativesReverse[reprChain] = set([i])
-            
+
             entryToRepChain = dict([(i, set([])) for i in entryToChain.keys()])  # Maps entries to their representative chains.
             for i in chainsOfInterest:
                 entry = i[:4]
@@ -462,17 +465,17 @@ def main(args):
                     entryToRepChain[entry].add(representatives[i])
                 else:
                     entryToRepChain[entry].add(i)
-            
+
             keptInputChains = set([])
-            
+
             for i in keptInput:
                 if len(entryToRepChain[i]) == 1:
                     # If the entry's chains are all representated by one chain, then all the chains are identical. A random chain from the entry should be kept.
                     keptInputChains.add(entryToChain[i][0])
                     del entryToRepChain[i]
-            
+
             adjList, namesList = adjlistcreation.intra_entry_main(similarityData, intraEntrySequenceIdentity, representativeChains, entryToRepChain)
-            
+
             for i in range(len(adjList)):
                 # Perform the intra-entry culling for each entry that needs it.
                 chainsToCull = Leafcull.main(adjList[i], namesList[i])
@@ -544,7 +547,7 @@ def main(args):
                 keptInputOutput += '\t'.join([chain, str(len(sequence)), experimentType, resolution, rValueObs, rValueFree]) + '\n'
                 fastaOutput += '>' + '\t'.join([chain, str(len(sequence)), experimentType, resolution, rValueObs, rValueFree, alphaCarbon, description, '<' + dbName + ' ' + dbCode + '>', '[' + organism + ']']) + '\n' + sequence + '\n'
     readProteinData.close()
-    
+
     if not cullByChain:
         keptInputOutput += '\n'.join(['\t'.join([i, entryStats[i]['len'], entryStats[i]['expt'], entryStats[i]['res'], entryStats[i]['rval'], entryStats[i]['freeRval']]) for i in sorted(entryStats.keys())])
 
@@ -557,7 +560,7 @@ def main(args):
     writeOutKeepFasta = open(outputLocation + '/KeptFasta.fasta', 'w')
     writeOutKeepFasta.write(fastaOutput)
     writeOutKeepFasta.close()
-    
+
     if verboseOutput:
         print 'Results saved. Total time elapsed: ', time.time() - startTime
 
@@ -580,7 +583,7 @@ def cull_main(similarities, thresholdPercentage, representativeChains, adjType, 
     @type startTime:  integer
     return @type: list
     return @use:  The redundant proteins to be removed from teh dataset.
-    
+
     """
 
     # Create the sparsematrix of the protein similarity graph.
@@ -590,7 +593,7 @@ def cull_main(similarities, thresholdPercentage, representativeChains, adjType, 
         adjacent, proteinNames = adjlistcreation.pdb_chain_main(similarities, thresholdPercentage, representativeChains)
     elif adjType == 'entry':
         adjacent, proteinNames = adjlistcreation.pdb_entry_main(similarities, thresholdPercentage, representativeChains, representativesReverse)
-    
+
     # Choose which proteins to remove from the similarity graph.
     if proteinNames == []:
         if verboseOutput:
