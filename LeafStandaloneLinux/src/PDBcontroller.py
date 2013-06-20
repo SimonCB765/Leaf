@@ -32,7 +32,7 @@ def main(args):
                                      epilog=('This program is designed to cull a dataset of protein sequences so that no ' +
                                              'two sequences have a sequence identity greater than the specified threshold ' +
                                              'percentage. The method used is the Leaf heuristic, which is described in a paper located at ' +
-											 'http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0055484.' +
+											 'http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0055484. ' +
                                              'A server to perform the culling can be found at http://www.bioinf.manchester.ac.uk/leaf/.')
                                      )
     group = parser.add_mutually_exclusive_group(required=True)
