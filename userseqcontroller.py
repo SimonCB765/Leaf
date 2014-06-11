@@ -1,0 +1,187 @@
+'''
+Created on 5 Feb 2011
+
+@author: Simon Bull
+'''
+
+import argparse
+import os
+import shutil
+import sys
+
+import checkfastaformat
+import performBLAST
+import Leafcull
+
+
+def main():
+    """Runs the protein culling.
+
+    :param args:    The command line arguments.
+    :type args:     list
+
+    """
+
+    #===========================================================================
+    # Parse the user's input.
+    #===========================================================================
+    parser = argparse.ArgumentParser(description=('Generate a non-redundant dataset of sequences from a FASTA file of input sequences. ' +
+                                                  'Please see the README for more information on how to use this program.'),
+                                     epilog=('This program is designed to cull a dataset of protein sequences so that no ' +
+                                             'two sequences have a sequence identity greater than the specified threshold ' +
+                                             'percentage. The method used is the Leaf heuristic, which is described in a paper located at ' +
+                                             'http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0055484.' +
+                                             'A server to perform the culling can be found at http://leaf-protein-culling.appspot.com/.')
+                                     )
+    parser.add_argument('inputFile', help='The location of the input FASTA file. (Required type: %(type)s).', type=str)
+    parser.add_argument('-p', '--percent', help='The maximum percent sequence identity between sequences 5 <= maxPercent < 100 must be true. (Required type: %(type)s, default value: %(default)s).',
+                        metavar="maxPercent", type=float, default=20, required=False)
+    parser.add_argument('-m', '--minLen', help='The maximum sequence length permissible. A negative value means not to use a minimum sequence length. Must not be greater than the maximum sequence length. (Required type: %(type)s, default value: Not Used).',
+                        metavar="minLength", type=int, required=False, default=-1)
+    parser.add_argument('-a', '--maxLen', help='The minimum sequence length permissible A negative value means not to use a maximum sequence length. Must not be less than the minimum sequence length. (Required type: %(type)s, default value: Not Used).',
+                        metavar="maxLength", type=int, required=False, default=-1)
+    parser.add_argument('-c', '--cores', help='The number of processor cores to use for BLASTing. (Required type: %(type)s, default value: %(default)s).',
+                        metavar="cores", type=int, default=2, required=False)
+    parser.add_argument('-o', '--output', help='The name of the output directory to create in the current working directory. (Required type: %(type)s, default value: a directory called %(default)s in the current working directory).',
+                        metavar="outputFolder", type=str, default='CullResults', required=False)
+    parser.add_argument('-v', '--verbose', help='Whether status updates should be displayed. (Default value: No status updates).',
+                        action='store_true', default=False, required=False)
+    args = parser.parse_args()
+
+    inputFile = args.inputFile
+    sequenceIdentity = args.percent
+    minLength = args.minLen
+    maxLength = args.maxLen
+    cores = args.cores
+    cullOperationID = args.output
+    verboseOutput = args.verbose
+
+    #===========================================================================
+    # Validate the user's input.
+    #===========================================================================
+    toExit = False
+    if not os.path.isfile(inputFile):
+        print('The location supplied for the file of input sequences is not a valid file location.')
+        toExit = True
+
+    if sequenceIdentity < 5 or sequenceIdentity >= 100:
+        print('The maximum allowable percentage sequence similarity must be no less than 5, and less than 100.')
+        toExit = True
+
+    if minLength < 0:
+        minLength = -1
+    if maxLength < 0:
+        maxLength = -1
+
+    if minLength > maxLength:
+        print('The minimum sequence length must be less than the maximum sequence length.')
+        toExit = True
+
+    if toExit:
+        sys.exit()
+
+    #===========================================================================
+    # Perform the culling.
+    #===========================================================================
+
+    # Create the directory to store the output in.
+    if verboseOutput:
+        print('Creating the output directory.')
+    cwd = os.getcwd()
+    if cullOperationID == 'CullResults':
+        outputLocation = cwd + '/' + cullOperationID
+    else:
+        outputLocation = cullOperationID
+    try:
+        if os.path.isdir(outputLocation):
+            shutil.rmtree(outputLocation)
+        elif os.path.exists(outputLocation):
+            os.remove(outputLocation)
+        os.mkdir(outputLocation)
+    except:
+        print('The output directory could not be created. Please check the location specified in  the input parameters.')
+        print('If you did not specify a location then consider changing the default output location (the variable cullOperationID)')
+        sys.exit()
+
+    # Ensure that the FASTA file input is appropriately formatted.
+    if verboseOutput:
+        print('Validating the input file.')
+    fileToBLAST = outputLocation + '/InputCopy.fasta'
+    inputFileToLoad = open(inputFile, 'r')
+    inputFile = inputFileToLoad.read()
+    inputFileToLoad.close()
+    errorCode, message = checkfastaformat.main(inputFile, minLength, maxLength)
+    if errorCode != 0:
+        print(message)
+        sys.exit()
+    writeOut = open(fileToBLAST, 'w')
+    writeOut.write(message)
+    writeOut.close()
+
+    # Perform the BLASTing.
+    similarities = performBLAST.main(fileToBLAST, outputLocation + '/BLASTOutput', cores, verboseOutput=verboseOutput)
+
+    # Create the adjacency matrix of the protein similarity graph.
+    if verboseOutput:
+        print('Creating the adjacency matrix')
+    adjList = {}
+    for i in similarities:
+        chainA = i[0]
+        chainB = i[1]
+        seqIden = similarities[i]
+        if seqIden >= sequenceIdentity:
+            # The sequences are too similar.
+            if chainA in adjList:
+                adjList[chainA].add(chainB)
+            else:
+                adjList[chainA] = set([chainB])
+            if chainB in adjList:
+                adjList[chainB].add(chainA)
+            else:
+                adjList[chainB] = set([chainA])
+
+    # Choose which proteins to remove from the similarity graph.
+    if verboseOutput:
+        print('Performing the culling.')
+    proteinsToCull = Leafcull.main(adjList)
+
+    if verboseOutput:
+        print('Writing out the results.')
+
+    # Write out the proteins that were removed.
+    writeOutRem = open(outputLocation + '/Removed.txt', 'w')
+    for i in proteinsToCull:
+        writeOutRem.write(i + '\n')
+    writeOutRem.close()
+
+    # Write out a FASTA file of the proteins kept.
+    writeOutKeepFasta = open(outputLocation + '/KeptFasta.fasta', 'w')
+    writeOutKeepList = open(outputLocation + '/KeptList.txt', 'w')
+    writeOutKeepList.write('IDs\tLength\n')
+    readFasta = open(fileToBLAST, 'r')
+    recording = False
+    uniqueProteins = []  # Used to ensure no duplicates get through.
+    for line in readFasta:
+        if line[0] == '>':
+            notInToCull = len([i for i in proteinsToCull if line[1 : len(i) + 1] == i]) == 0
+            if notInToCull and not line in uniqueProteins:
+                # If the line starts a new protein definition, and that protein is one of the ones to keep.
+                recording = True
+                uniqueProteins.append(line)
+                writeOutKeepFasta.write(line)
+                writeOutKeepList.write(line[1:-1])
+            else:
+                # If the line start a new protein definition, but the protein is not one of the ones to keep.
+                recording = False
+        else:
+            # Otherwise the line is a protein sequence.
+            if recording:
+                # If we are currently working on a protein that is being kept.
+                writeOutKeepFasta.write(line)
+                writeOutKeepList.write('\t' + str(len(line[:-1])) + '\n')
+    readFasta.close()
+    writeOutKeepList.close()
+    writeOutKeepFasta.close()
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,1 @@
+Place BLAST+ executables in the directory.
