@@ -31,7 +31,7 @@ def main(args):
                                              'http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0055484.' +
                                              'A server to perform the culling can be found at http://leaf-protein-culling.appspot.com/.')
                                      )
-    parser.add_argument('datalocation', help='The location of the directory that contains the processed PDB data (required type: %(type)s).')
+    parser.add_argument('datalocation', help='The location of the directory that contains the processed PDB data.')
     parser.add_argument('-i', '--inputFile', help='The location of the file containing the identifiers of the chains to cull. (Required type: %(type)s, default value: Not used).',
                         metavar="inputFile", type=str, default='', required=False)
     parser.add_argument('-p', '--percent', help='The maximum percent sequence identity between sequences. 5 <= maxPercent < 100 must be true. (Required type: %(type)s, default value: %(default)s).',

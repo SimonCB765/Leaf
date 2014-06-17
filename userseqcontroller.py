@@ -33,7 +33,7 @@ def main():
                                              'http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0055484.' +
                                              'A server to perform the culling can be found at http://leaf-protein-culling.appspot.com/.')
                                      )
-    parser.add_argument('inputFile', help='The location of the input FASTA file. (Required type: %(type)s).', type=str)
+    parser.add_argument('inputFile', help='The location of the input FASTA file.')
     parser.add_argument('-p', '--percent', help='The maximum percent sequence identity between sequences 5 <= maxPercent < 100 must be true. (Required type: %(type)s, default value: %(default)s).',
                         metavar="maxPercent", type=float, default=20, required=False)
     parser.add_argument('-m', '--minLen', help='The maximum sequence length permissible. A negative value means not to use a minimum sequence length. Must not be greater than the maximum sequence length. (Required type: %(type)s, default value: Not Used).',
